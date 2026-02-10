@@ -23,7 +23,7 @@
 (global-display-line-numbers-mode 1) ; 启用行号
 (setq display-line-numbers-type 'relative) ; 相对行号
 (setq inhibit-startup-message t) ; 关闭欢迎界面
-(setq frame-title-format "%f")
+(setq frame-title-format "%f") ;显示文件相对路径
 (ido-mode 1)
 (ido-everywhere 1)
 
