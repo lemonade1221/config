@@ -1,5 +1,3 @@
-
-
 ;; ======================================
 ;; 自定义设置文件（分离自定义配置）
 ;; ======================================
@@ -56,27 +54,9 @@
     (move-beginning-of-line 1)
     (forward-char column)))
 
-(global-set-key (kbd "C-,") 'rc/duplicate-line)(defun duplicate-line ()
+(global-set-key (kbd "C-,") 'rc/duplicate-line)
 
-;; ======================================
-;; gtags 配置（代码导航）
-;; ======================================
-(rc/require 'gtags)
-;; 启用 gtags 模式
-(gtags-mode t)
 
-;; 设置 gtags 相关快捷键
-(global-set-key (kbd "C-c g f") 'gtags-find-file)    ; 查找文件
-(global-set-key (kbd "M-.") 'gtags-find-symbol)  ; 查找符号定义
-(global-set-key (kbd "C-c g r") 'gtags-find-rtag)    ; 查找引用
-(global-set-key (kbd "C-c g u") 'gtags-pop-stack)    ; 返回上一位置
-(global-set-key (kbd "C-c g v") 'gtags-find-with-grep) ; 使用 grep 查找
-
-;; 自动在编程模式下启用 gtags
-(add-hook 'prog-mode-hook
-          (lambda ()
-            (gtags-mode 1)
-            (setq gtags-suggested-key-mapping t)))
 ;; ======================================
 ;; quickrun 配置（代码快速执行）
 ;; ======================================
@@ -84,3 +64,77 @@
   :ensure t
   :bind (("C-c q" . quickrun)      ; 运行当前文件
          ("C-c r" . quickrun-region))) ; 运行选中区域
+;; ======================================
+;; gt.el 配置 (原 go-translate)
+;; ======================================
+(rc/require 'gt)
+(require 'gt)
+(setq gt-default-translator
+       (gt-translator
+        :taker (gt-taker :langs '(en zh))
+        :engines (list (gt-youdao-dict-engine) (gt-bing-engine))
+        :render (gt-buffer-render)))
+
+;; 3. 绑定快捷键 (g_translate-at-point 已废弃，统一使用 gt-do-setup)
+(global-set-key (kbd "C-c t") 'gt-translate)
+
+;; ======================================
+;; Org-mode 扩展包安装
+;; ======================================
+(rc/require 'org-appear)           ; 动态显示/隐藏标记 (Typora 核心体验)
+(rc/require 'org-modern)           ; 现代化的 UI 元素（标题、复选框、表格）
+(rc/require 'visual-fill-column)   ; 居中排版显示
+(rc/require 'org-download)         ; 截图直接粘贴到 Org (类似 Typora 粘贴图片)
+
+;; ======================================
+;; Org-mode 核心配置
+;; ======================================
+(with-eval-after-load 'org
+  ;; 1. 基础视觉优化：隐藏标记符号，开启缩进
+  (setq org-startup-indented t            ; 开启自动缩进
+        org-hide-emphasis-markers t       ; 隐藏 *粗体* / /斜体/ 的符号
+        org-startup-with-inline-images t  ; 自动显示图片
+        org-image-actual-width nil        ; 允许图片缩放
+        org-fontify-whole-heading-line t  ; 标题行整行高亮
+        org-support-shift-select t)       ; 支持 Shift 选择
+
+  ;; 2. 增强标题字号 (让它看起来更像 Markdown 编辑器)
+  (custom-set-faces
+   '(org-level-1 ((t (:height 1.4 :weight bold :foreground "#6699cc"))))
+   '(org-level-2 ((t (:height 1.2 :weight bold :foreground "#99cc99"))))
+   '(org-level-3 ((t (:height 1.1 :weight bold :foreground "#f2777a"))))
+   '(org-document-title ((t (:height 1.7 :weight bold :underline t)))))
+
+  ;; 3. 快速插入代码块 (输入 <s 然后按 TAB)
+  (require 'org-tempo)
+  (add-to-list 'org-structure-template-alist '("s" . "src"))
+  (add-to-list 'org-structure-template-alist '("e" . "example")))
+
+;; ======================================
+;; 功能插件配置
+;; ======================================
+
+;; 1. Org-Appear: 只有光标在上面时才显示 * / _ 等标记
+(add-hook 'org-mode-hook 'org-appear-mode)
+(setq org-appear-autoemphasis t
+      org-appear-autolinks t
+      org-appear-autosubmarkers t)
+
+;; 2. Org-Modern: 将星号标题、复选框等修饰为现代图形
+(add-hook 'org-mode-hook #'org-modern-mode)
+(setq org-modern-star 'replace) ; 替换星号标题
+
+;; 3. Visual-Fill-Column: 模拟 Typora 居中写作效果
+(defun rc/org-visual-setup ()
+  (setq visual-fill-column-width 100
+        visual-fill-column-center-text t)
+  (visual-fill-column-mode 1)
+  (display-line-numbers-mode -1)) ; 写作模式通常关闭行号
+
+(add-hook 'org-mode-hook #'rc/org-visual-setup)
+
+;; 4. Org-Download: 类似 Typora 粘贴剪贴板图片
+(require 'org-download)
+(setq-default org-download-image-dir "./images") ; 图片存储目录
+(add-hook 'dired-mode-hook 'org-download-enable)
+(define-key org-mode-map (kbd "C-c p") 'org-download-clipboard)
