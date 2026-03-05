@@ -22,12 +22,21 @@
 (setq display-line-numbers-type 'relative) ; 相对行号
 (setq inhibit-startup-message t) ; 关闭欢迎界面
 (setq frame-title-format "%f") ;显示文件相对路径
-(ido-mode 1)
-(ido-everywhere 1)
+(setq ring-bell-function 'ignore);屏蔽警告音
+(setq-default c-basic-offset 4)
 
+(ido-mode 1)
+(setq ido-everywhere t)
+(ido-everywhere 1)
 (rc/require 'smex)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
+(rc/require 'vertico)
+(vertico-mode 1)
+
+
+
+
 
 (rc/require 'multiple-cursors)
 
@@ -55,8 +64,6 @@
     (forward-char column)))
 
 (global-set-key (kbd "C-,") 'rc/duplicate-line)
-
-
 ;; ======================================
 ;; quickrun 配置（代码快速执行）
 ;; ======================================
@@ -108,7 +115,10 @@
   ;; 3. 快速插入代码块 (输入 <s 然后按 TAB)
   (require 'org-tempo)
   (add-to-list 'org-structure-template-alist '("s" . "src"))
-  (add-to-list 'org-structure-template-alist '("e" . "example")))
+  (add-to-list 'org-structure-template-alist '("e" . "example"))
+  ;; 加载 Markdown 导出模块
+  (require 'ox-md)
+  )
 
 ;; ======================================
 ;; 功能插件配置
@@ -138,3 +148,33 @@
 (setq-default org-download-image-dir "./images") ; 图片存储目录
 (add-hook 'dired-mode-hook 'org-download-enable)
 (define-key org-mode-map (kbd "C-c p") 'org-download-clipboard)
+
+
+
+;; ======================================
+;; Org-roam 核心配置
+;; ======================================
+(rc/require 'org-roam)
+(rc/require 'org-roam-ui)
+(with-eval-after-load 'org-roam
+  ;; 1. 设置笔记存储目录 (请修改为你自己的路径)
+  (setq org-roam-directory (file-truename "~/roam-notes/"))
+
+  ;; 2. 数据库自动同步 (这是 org-roam 快速搜索的基础)
+  (org-roam-db-autosync-mode)
+
+  ;; 3. 自定义单词笔记模板 (针对你记单词的需求)
+  (setq org-roam-capture-templates
+        '(("d" "default" plain "%?"
+           :target (file+head "%<%Y%m%d%H%M%S>-${title}.org" "#+title: ${title}\n")
+           :unnarrowed t)
+          ("w" "word" plain "* Root: %?\n* Definition:\n* Example:"
+           :target (file+head "words/%<%Y%m%d>-${title}.org" "#+title: ${title}\n#+filetags: :word:")
+           :unnarrowed t))))
+
+;; 4. 快捷键绑定 (Org-roam 的灵魂)
+(global-set-key (kbd "C-c n c") 'org-roam-capture)
+(global-set-key (kbd "C-c n f") 'org-roam-node-find)   ; 查找/创建笔记
+(global-set-key (kbd "C-c n i") 'org-roam-node-insert) ; 在当前位置插入链接
+(global-set-key (kbd "C-c n l") 'org-roam-buffer-toggle) ; 显示双向链接侧边栏
+(global-set-key (kbd "C-c n u") 'org-roam-ui-mode)
