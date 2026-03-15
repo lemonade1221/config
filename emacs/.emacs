@@ -1,45 +1,61 @@
+;; æé«˜å¯åŠ¨æ—¶çš„ GC é˜ˆå€¼ï¼ŒåŠ å¿«åŠ è½½é€Ÿåº¦
+(setq gc-cons-threshold (* 50 1024 1024))
+
+;; å¯åŠ¨å®Œæˆåæ¢å¤åˆ°ä¸€ä¸ªåˆç†çš„æ°´å¹³ï¼Œé¿å…é•¿æ—¶é—´å¡é¡¿
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq gc-cons-threshold (* 2 1024 1024))))
+
+;; æš‚æ—¶ç¦ç”¨ file-name-handler ä»¥åŠ é€Ÿå¯åŠ¨
+(setq default-file-name-handler-alist file-name-handler-alist)
+(setq file-name-handler-alist nil)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq file-name-handler-alist default-file-name-handler-alist)))
 ;; ======================================
-;; ×Ô¶¨ÒåÉèÖÃÎÄ¼ş£¨·ÖÀë×Ô¶¨ÒåÅäÖÃ£©
+;; è‡ªå®šä¹‰è®¾ç½®æ–‡ä»¶ï¼ˆåˆ†ç¦»è‡ªå®šä¹‰é…ç½®ï¼‰
 ;; ======================================
 (setq custom-file "~/.emacs.custom.el")
 (when (file-exists-p custom-file)
   (load custom-file))
 (load "~/rc.el")
 ;; ======================================
-;; ½çÃæÉèÖÃ,¹¦ÄÜÆôÓÃ
+;; ç•Œé¢è®¾ç½®,åŠŸèƒ½å¯ç”¨
 ;; ======================================
-(setq initial-frame-alist '((fullscreen . maximized)));Ä¬ÈÏÎª×î´ó»¯
-(set-frame-font "Consolas-14")
+(setq initial-frame-alist '((fullscreen . maximized)));é»˜è®¤ä¸ºæœ€å¤§åŒ–
+(set-frame-font "Consolas-16")
 (rc/require-theme 'gruber-darker)
-(menu-bar-mode -1)    ; ½ûÓÃ²Ëµ¥À¸
-(tool-bar-mode -1)    ; ½ûÓÃ¹¤¾ßÀ¸
-(toggle-scroll-bar -1) ; ½ûÓÃ¹ö¶¯Ìõ
-(electric-pair-mode t);×Ô¶¯²¹È«À¨ºÅ
-(global-auto-revert-mode t);×Ô¶¯Ë¢ĞÂbuffer
-(add-hook 'prog-mode-hook #'show-paren-mode) ; ±à³ÌÄ£Ê½ÏÂ£¬¹â±êÔÚÀ¨ºÅÉÏÊ±¸ßÁÁÁíÒ»¸öÀ¨ºÅ
+(menu-bar-mode -1)    ; ç¦ç”¨èœå•æ 
+(tool-bar-mode -1)    ; ç¦ç”¨å·¥å…·æ 
+(toggle-scroll-bar -1) ; ç¦ç”¨æ»šåŠ¨æ¡
+(electric-pair-mode t);è‡ªåŠ¨è¡¥å…¨æ‹¬å·
+(fset 'yes-or-no-p 'y-or-n-p)
+(global-auto-revert-mode t);è‡ªåŠ¨åˆ·æ–°buffer
+(add-hook 'prog-mode-hook #'show-paren-mode) ; ç¼–ç¨‹æ¨¡å¼ä¸‹ï¼Œå…‰æ ‡åœ¨æ‹¬å·ä¸Šæ—¶é«˜äº®å¦ä¸€ä¸ªæ‹¬å·
 
-(global-display-line-numbers-mode 1) ; ÆôÓÃĞĞºÅ
-(setq display-line-numbers-type 'relative) ; Ïà¶ÔĞĞºÅ
-(setq inhibit-startup-message t) ; ¹Ø±Õ»¶Ó­½çÃæ
-(setq frame-title-format "%f") ;ÏÔÊ¾ÎÄ¼şÏà¶ÔÂ·¾¶
-(setq ring-bell-function 'ignore);ÆÁ±Î¾¯¸æÒô
+(global-display-line-numbers-mode 1) ; å¯ç”¨è¡Œå·
+(setq display-line-numbers-type 'relative) ; ç›¸å¯¹è¡Œå·
+(setq inhibit-startup-message t) ; å…³é—­æ¬¢è¿ç•Œé¢
+(setq frame-title-format "%f") ;æ˜¾ç¤ºæ–‡ä»¶ç›¸å¯¹è·¯å¾„
+(setq ring-bell-function 'ignore);å±è”½è­¦å‘ŠéŸ³
 (setq-default c-basic-offset 4)
+
+
 
 (ido-mode 1)
 (setq ido-everywhere t)
 (ido-everywhere 1)
+(setq ido-auto-merge-work-directories-length -1)
 (rc/require 'smex)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
+
 (rc/require 'vertico)
 (vertico-mode 1)
-
-
-
-
+(setq vertico-count 4)               
+(setq vertico-resize nil)
 
 (rc/require 'multiple-cursors)
-
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "C->")         'mc/mark-next-like-this)
 (global-set-key (kbd "C-<")         'mc/mark-previous-like-this)
@@ -49,7 +65,7 @@
 
 (rc/require 'rust-mode)
 ;; ======================================
-;; ×Ô¶¨Òå¹¦ÄÜ£º¸´ÖÆµ±Ç°ĞĞ
+;; è‡ªå®šä¹‰åŠŸèƒ½ï¼šå¤åˆ¶å½“å‰è¡Œ
 ;; ======================================
 (defun rc/duplicate-line ()
   "Duplicate current line"
@@ -65,14 +81,14 @@
 
 (global-set-key (kbd "C-,") 'rc/duplicate-line)
 ;; ======================================
-;; quickrun ÅäÖÃ£¨´úÂë¿ìËÙÖ´ĞĞ£©
+;; quickrun é…ç½®ï¼ˆä»£ç å¿«é€Ÿæ‰§è¡Œï¼‰
 ;; ======================================
 (use-package quickrun
   :ensure t
-  :bind (("C-c q" . quickrun)      ; ÔËĞĞµ±Ç°ÎÄ¼ş
-         ("C-c r" . quickrun-region))) ; ÔËĞĞÑ¡ÖĞÇøÓò
+  :bind (("C-c q" . quickrun)      ; è¿è¡Œå½“å‰æ–‡ä»¶
+         ("C-c r" . quickrun-region))) ; è¿è¡Œé€‰ä¸­åŒºåŸŸ
 ;; ======================================
-;; gt.el ÅäÖÃ (Ô­ go-translate)
+;; gt.el é…ç½® (åŸ go-translate)
 ;; ======================================
 (rc/require 'gt)
 (require 'gt)
@@ -82,99 +98,107 @@
         :engines (list (gt-youdao-dict-engine) (gt-bing-engine))
         :render (gt-buffer-render)))
 
-;; 3. °ó¶¨¿ì½İ¼ü (g_translate-at-point ÒÑ·ÏÆú£¬Í³Ò»Ê¹ÓÃ gt-do-setup)
 (global-set-key (kbd "C-c t") 'gt-translate)
 
 ;; ======================================
-;; Org-mode À©Õ¹°ü°²×°
+;; Org-mode æ‰©å±•åŒ…å®‰è£…
 ;; ======================================
-(rc/require 'org-appear)           ; ¶¯Ì¬ÏÔÊ¾/Òş²Ø±ê¼Ç (Typora ºËĞÄÌåÑé)
-(rc/require 'org-modern)           ; ÏÖ´ú»¯µÄ UI ÔªËØ£¨±êÌâ¡¢¸´Ñ¡¿ò¡¢±í¸ñ£©
-(rc/require 'visual-fill-column)   ; ¾ÓÖĞÅÅ°æÏÔÊ¾
-(rc/require 'org-download)         ; ½ØÍ¼Ö±½ÓÕ³Ìùµ½ Org (ÀàËÆ Typora Õ³ÌùÍ¼Æ¬)
+(rc/require 'org-appear)           ; åŠ¨æ€æ˜¾ç¤º/éšè—æ ‡è®° (Typora æ ¸å¿ƒä½“éªŒ)
+(rc/require 'org-modern)           ; ç°ä»£åŒ–çš„ UI å…ƒç´ ï¼ˆæ ‡é¢˜ã€å¤é€‰æ¡†ã€è¡¨æ ¼ï¼‰
+(rc/require 'visual-fill-column)   ; å±…ä¸­æ’ç‰ˆæ˜¾ç¤º
+(rc/require 'org-download)         ; æˆªå›¾ç›´æ¥ç²˜è´´åˆ° Org (ç±»ä¼¼ Typora ç²˜è´´å›¾ç‰‡)
 
 ;; ======================================
-;; Org-mode ºËĞÄÅäÖÃ
+;; Org-mode æ ¸å¿ƒé…ç½®
 ;; ======================================
 (with-eval-after-load 'org
-  ;; 1. »ù´¡ÊÓ¾õÓÅ»¯£ºÒş²Ø±ê¼Ç·ûºÅ£¬¿ªÆôËõ½ø
-  (setq org-startup-indented t            ; ¿ªÆô×Ô¶¯Ëõ½ø
-        org-hide-emphasis-markers t       ; Òş²Ø *´ÖÌå* / /Ğ±Ìå/ µÄ·ûºÅ
-        org-startup-with-inline-images t  ; ×Ô¶¯ÏÔÊ¾Í¼Æ¬
-        org-image-actual-width nil        ; ÔÊĞíÍ¼Æ¬Ëõ·Å
-        org-fontify-whole-heading-line t  ; ±êÌâĞĞÕûĞĞ¸ßÁÁ
-        org-support-shift-select t)       ; Ö§³Ö Shift Ñ¡Ôñ
+  ;; 1. åŸºç¡€è§†è§‰ä¼˜åŒ–ï¼šéšè—æ ‡è®°ç¬¦å·ï¼Œå¼€å¯ç¼©è¿›
+  (setq org-startup-indented t            ; å¼€å¯è‡ªåŠ¨ç¼©è¿›
+        org-hide-emphasis-markers t       ; éšè— *ç²—ä½“* / /æ–œä½“/ çš„ç¬¦å·
+        org-startup-with-inline-images t  ; è‡ªåŠ¨æ˜¾ç¤ºå›¾ç‰‡
+        org-image-actual-width nil        ; å…è®¸å›¾ç‰‡ç¼©æ”¾
+        org-fontify-whole-heading-line t  ; æ ‡é¢˜è¡Œæ•´è¡Œé«˜äº®
+        org-support-shift-select t)       ; æ”¯æŒ Shift é€‰æ‹©
 
-  ;; 2. ÔöÇ¿±êÌâ×ÖºÅ (ÈÃËü¿´ÆğÀ´¸üÏñ Markdown ±à¼­Æ÷)
+  ;; 2. å¢å¼ºæ ‡é¢˜å­—å· (è®©å®ƒçœ‹èµ·æ¥æ›´åƒ Markdown ç¼–è¾‘å™¨)
   (custom-set-faces
    '(org-level-1 ((t (:height 1.4 :weight bold :foreground "#6699cc"))))
    '(org-level-2 ((t (:height 1.2 :weight bold :foreground "#99cc99"))))
    '(org-level-3 ((t (:height 1.1 :weight bold :foreground "#f2777a"))))
    '(org-document-title ((t (:height 1.7 :weight bold :underline t)))))
 
-  ;; 3. ¿ìËÙ²åÈë´úÂë¿é (ÊäÈë <s È»ºó°´ TAB)
+  ;; 3. å¿«é€Ÿæ’å…¥ä»£ç å— (è¾“å…¥ <s ç„¶åæŒ‰ TAB)
   (require 'org-tempo)
   (add-to-list 'org-structure-template-alist '("s" . "src"))
   (add-to-list 'org-structure-template-alist '("e" . "example"))
-  ;; ¼ÓÔØ Markdown µ¼³öÄ£¿é
+  ;; åŠ è½½ Markdown å¯¼å‡ºæ¨¡å—
   (require 'ox-md)
   )
-
 ;; ======================================
-;; ¹¦ÄÜ²å¼şÅäÖÃ
+;; åŠŸèƒ½æ’ä»¶é…ç½®
 ;; ======================================
-
-;; 1. Org-Appear: Ö»ÓĞ¹â±êÔÚÉÏÃæÊ±²ÅÏÔÊ¾ * / _ µÈ±ê¼Ç
+;; 1. Org-Appear: åªæœ‰å…‰æ ‡åœ¨ä¸Šé¢æ—¶æ‰æ˜¾ç¤º * / _ ç­‰æ ‡è®°
 (add-hook 'org-mode-hook 'org-appear-mode)
 (setq org-appear-autoemphasis t
       org-appear-autolinks t
       org-appear-autosubmarkers t)
 
-;; 2. Org-Modern: ½«ĞÇºÅ±êÌâ¡¢¸´Ñ¡¿òµÈĞŞÊÎÎªÏÖ´úÍ¼ĞÎ
+;; 2. Org-Modern: å°†æ˜Ÿå·æ ‡é¢˜ã€å¤é€‰æ¡†ç­‰ä¿®é¥°ä¸ºç°ä»£å›¾å½¢
 (add-hook 'org-mode-hook #'org-modern-mode)
-(setq org-modern-star 'replace) ; Ìæ»»ĞÇºÅ±êÌâ
+(setq org-modern-star 'replace) ; æ›¿æ¢æ˜Ÿå·æ ‡é¢˜
 
-;; 3. Visual-Fill-Column: Ä£Äâ Typora ¾ÓÖĞĞ´×÷Ğ§¹û
+;; 3. Visual-Fill-Column: æ¨¡æ‹Ÿ Typora å±…ä¸­å†™ä½œæ•ˆæœ
 (defun rc/org-visual-setup ()
   (setq visual-fill-column-width 100
         visual-fill-column-center-text t)
   (visual-fill-column-mode 1)
-  (display-line-numbers-mode -1)) ; Ğ´×÷Ä£Ê½Í¨³£¹Ø±ÕĞĞºÅ
+  (display-line-numbers-mode -1)) ; å†™ä½œæ¨¡å¼é€šå¸¸å…³é—­è¡Œå·
 
 (add-hook 'org-mode-hook #'rc/org-visual-setup)
 
-;; 4. Org-Download: ÀàËÆ Typora Õ³Ìù¼ôÌù°åÍ¼Æ¬
+;; 4. Org-Download: ç±»ä¼¼ Typora ç²˜è´´å‰ªè´´æ¿å›¾ç‰‡
 (require 'org-download)
-(setq-default org-download-image-dir "./images") ; Í¼Æ¬´æ´¢Ä¿Â¼
+(setq-default org-download-image-dir "./images") ; å›¾ç‰‡å­˜å‚¨ç›®å½•
 (add-hook 'dired-mode-hook 'org-download-enable)
 (define-key org-mode-map (kbd "C-c p") 'org-download-clipboard)
-
-
-
 ;; ======================================
-;; Org-roam ºËĞÄÅäÖÃ
+;; Org-roam æ ¸å¿ƒé…ç½®
 ;; ======================================
 (rc/require 'org-roam)
 (rc/require 'org-roam-ui)
 (with-eval-after-load 'org-roam
-  ;; 1. ÉèÖÃ±Ê¼Ç´æ´¢Ä¿Â¼ (ÇëĞŞ¸ÄÎªÄã×Ô¼ºµÄÂ·¾¶)
-  (setq org-roam-directory (file-truename "~/roam-notes/"))
+  ;; 1. è®¾ç½®ç¬”è®°å­˜å‚¨ç›®å½• (è¯·ä¿®æ”¹ä¸ºä½ è‡ªå·±çš„è·¯å¾„)
+  (setq org-roam-directory (file-truename "~/org/roam-notes/"))
 
-  ;; 2. Êı¾İ¿â×Ô¶¯Í¬²½ (ÕâÊÇ org-roam ¿ìËÙËÑË÷µÄ»ù´¡)
+  ;; 2. æ•°æ®åº“è‡ªåŠ¨åŒæ­¥ (è¿™æ˜¯ org-roam å¿«é€Ÿæœç´¢çš„åŸºç¡€)
   (org-roam-db-autosync-mode)
-
-  ;; 3. ×Ô¶¨Òåµ¥´Ê±Ê¼ÇÄ£°å (Õë¶ÔÄã¼Çµ¥´ÊµÄĞèÇó)
-  (setq org-roam-capture-templates
-        '(("d" "default" plain "%?"
-           :target (file+head "%<%Y%m%d%H%M%S>-${title}.org" "#+title: ${title}\n")
-           :unnarrowed t)
-          ("w" "word" plain "* Root: %?\n* Definition:\n* Example:"
-           :target (file+head "words/%<%Y%m%d>-${title}.org" "#+title: ${title}\n#+filetags: :word:")
-           :unnarrowed t))))
-
-;; 4. ¿ì½İ¼ü°ó¶¨ (Org-roam µÄÁé»ê)
+)
+;; 3. å¿«æ·é”®ç»‘å®š (Org-roam çš„çµé­‚)
 (global-set-key (kbd "C-c n c") 'org-roam-capture)
-(global-set-key (kbd "C-c n f") 'org-roam-node-find)   ; ²éÕÒ/´´½¨±Ê¼Ç
-(global-set-key (kbd "C-c n i") 'org-roam-node-insert) ; ÔÚµ±Ç°Î»ÖÃ²åÈëÁ´½Ó
-(global-set-key (kbd "C-c n l") 'org-roam-buffer-toggle) ; ÏÔÊ¾Ë«ÏòÁ´½Ó²à±ßÀ¸
+(global-set-key (kbd "C-c n f") 'org-roam-node-find)   ; æŸ¥æ‰¾/åˆ›å»ºç¬”è®°
+(global-set-key (kbd "C-c n i") 'org-roam-node-insert) ; åœ¨å½“å‰ä½ç½®æ’å…¥é“¾æ¥
+(global-set-key (kbd "C-c n l") 'org-roam-buffer-toggle) ; æ˜¾ç¤ºåŒå‘é“¾æ¥ä¾§è¾¹æ 
 (global-set-key (kbd "C-c n u") 'org-roam-ui-mode)
+
+;; ======================================
+;; æ˜¾ç¤ºå¯åŠ¨æ—¶é—´
+;; ======================================
+
+(defun startup-timer ()
+  (let ((elapsed (float-time (time-subtract after-init-time before-init-time))))
+    (with-current-buffer "*scratch*"
+      (insert (format ";; Start up finished in: %.3f sã€‚\n" elapsed)))))
+(add-hook 'emacs-startup-hook #'startup-timer)
+
+(rc/require 'eglot)
+
+
+;; è‡ªåŠ¨ä¸º C/C++ æ¨¡å¼å¯ç”¨ Eglot
+(add-hook 'c-mode-hook 'eglot-ensure)
+(add-hook 'c++-mode-hook 'eglot-ensure)
+
+(rc/require 'corfu)
+(global-corfu-mode t)
+(setq corfu-auto t)                 ;; è‡ªåŠ¨è§¦å‘
+(setq corfu-auto-delay 0.1)         ;; å»¶è¿Ÿ
+(setq corfu-auto-prefix 2)          ;; è¾“å…¥2ä¸ªå­—ç¬¦åè§¦å‘
