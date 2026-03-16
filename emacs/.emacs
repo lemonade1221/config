@@ -23,7 +23,18 @@
 ;; 界面设置,功能启用
 ;; ======================================
 (setq initial-frame-alist '((fullscreen . maximized)));默认为最大化
-(set-frame-font "Consolas-16")
+(cond
+ ;; Windows 系统
+ ((eq system-type 'windows-nt)
+  (set-frame-font "Consolas-16"))
+
+ ;; macOS 系统 (通常用 Menlo 或 Monaco)
+ ((eq system-type 'darwin)
+  (set-frame-font "Menlo-16"))
+
+ ;; Linux 系统 (通常用 DejaVu Sans Mono 或 JetBrains Mono)
+ (t
+  (set-frame-font "Monospace-16")))
 (rc/require-theme 'gruber-darker)
 (menu-bar-mode -1)    ; 禁用菜单栏
 (tool-bar-mode -1)    ; 禁用工具栏
