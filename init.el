@@ -15,10 +15,14 @@
 ;; ======================================
 ;; 自定义设置文件（分离自定义配置）
 ;; ======================================
-(setq custom-file "~/.emacs.custom.el")
+(defvar rc/config-dir (file-name-directory (or load-file-name buffer-file-name)))
+(setq custom-file (expand-file-name "custom.el" rc/config-dir))
 (when (file-exists-p custom-file)
   (load custom-file))
-(load "~/rc.el")
+(setq package-user-dir (expand-file-name "elpa" rc/config-dir))
+(require (quote package))
+(package-initialize)
+(load (expand-file-name "rc.el" rc/config-dir))
 ;; ======================================
 ;; 界面设置,功能启用
 ;; ======================================
@@ -43,15 +47,14 @@
 (fset 'yes-or-no-p 'y-or-n-p)
 (global-auto-revert-mode t);自动刷新buffer
 (add-hook 'prog-mode-hook #'show-paren-mode) ; 编程模式下，光标在括号上时高亮另一个括号
+(setq make-backup-files nil)
 
 (global-display-line-numbers-mode 1) ; 启用行号
 (setq display-line-numbers-type 'relative) ; 相对行号
 (setq inhibit-startup-message t) ; 关闭欢迎界面
 (setq frame-title-format "%f") ;显示文件相对路径
 (setq ring-bell-function 'ignore);屏蔽警告音
-(setq-default c-basic-offset 4)
-
-
+(setq c-basic-offset 4)
 
 (ido-mode 1)
 (setq ido-everywhere t)
@@ -99,17 +102,58 @@
   :bind (("C-c q" . quickrun)      ; 运行当前文件
          ("C-c r" . quickrun-region))) ; 运行选中区域
 ;; ======================================
-;; gt.el 配置 (原 go-translate)
+;; Git 工作流增强
+;; ======================================
+(rc/require 'magit 'diff-hl)
+
+(use-package magit
+  :ensure t
+  :bind (("C-c g s" . magit-status)
+         ("C-c g l" . magit-log-current)
+         ("C-c g b" . magit-blame-addition)))
+
+(use-package diff-hl
+  :ensure t
+  :hook ((dired-mode . diff-hl-dired-mode)
+         (after-save . diff-hl-update))
+  :bind (("C-c g n" . diff-hl-next-hunk)
+         ("C-c g p" . diff-hl-previous-hunk)
+         ("C-c g r" . diff-hl-revert-hunk))
+  :config
+  (global-diff-hl-mode 1))
+
+;; ======================================
+;; gt.el 配置
 ;; ======================================
 (rc/require 'gt)
 (require 'gt)
-(setq gt-default-translator
-       (gt-translator
-        :taker (gt-taker :langs '(en zh))
-        :engines (list (gt-youdao-dict-engine) (gt-bing-engine))
-        :render (gt-buffer-render)))
 
-(global-set-key (kbd "C-c t") 'gt-translate)
+;; ========= 默认翻译（短文本） =========
+(setq gt-default-translator
+      (gt-translator
+       :taker (gt-taker :langs '(en zh))
+       :engines (list
+                 (gt-youdao-dict-engine)
+                 (gt-bing-engine))
+       :render (gt-buffer-render)))
+
+;; ========= 长文本翻译（论文） =========
+(setq gt-long-text-translator
+      (gt-translator
+       :taker (gt-taker :langs '(en zh))
+       :engines (list
+                 ;; 推荐：DeepL 或 Google
+                 (gt-google-engine)
+                 ;; 如果你后面接 GPT，可以替换这里
+                 )
+       :render (gt-buffer-render)))
+
+;; ========= 快捷键 =========
+(global-set-key (kbd "C-c t") 'gt-translate)          ;; 默认
+(global-set-key (kbd "C-c T")                         ;; 大写 T：长文本
+                (lambda ()
+                  (interactive)
+                  (gt-start gt-long-text-translator)))
 
 ;; ======================================
 ;; Org-mode 扩展包安装
@@ -158,16 +202,8 @@
 (add-hook 'org-mode-hook #'org-modern-mode)
 (setq org-modern-star 'replace) ; 替换星号标题
 
-;; 3. Visual-Fill-Column: 模拟 Typora 居中写作效果
-(defun rc/org-visual-setup ()
-  (setq visual-fill-column-width 100
-        visual-fill-column-center-text t)
-  (visual-fill-column-mode 1)
-  (display-line-numbers-mode -1)) ; 写作模式通常关闭行号
 
-(add-hook 'org-mode-hook #'rc/org-visual-setup)
-
-;; 4. Org-Download: 类似 Typora 粘贴剪贴板图片
+;; . Org-Download: 类似 Typora 粘贴剪贴板图片
 (require 'org-download)
 (setq-default org-download-image-dir "./images") ; 图片存储目录
 (add-hook 'dired-mode-hook 'org-download-enable)
@@ -200,16 +236,3 @@
     (with-current-buffer "*scratch*"
       (insert (format ";; Start up finished in: %.3f s。\n" elapsed)))))
 (add-hook 'emacs-startup-hook #'startup-timer)
-
-(rc/require 'eglot)
-
-
-;; 自动为 C/C++ 模式启用 Eglot
-(add-hook 'c-mode-hook 'eglot-ensure)
-(add-hook 'c++-mode-hook 'eglot-ensure)
-
-(rc/require 'corfu)
-(global-corfu-mode t)
-(setq corfu-auto t)                 ;; 自动触发
-(setq corfu-auto-delay 0.1)         ;; 延迟
-(setq corfu-auto-prefix 2)          ;; 输入2个字符后触发

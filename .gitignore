@@ -1,0 +1,15 @@
+.DS_Store
+elpa/
+elpa-bak/
+auto-save-list/
+transient/
+ido.last
+ido.last~
+smex-items
+org-roam.db
+bookmarks
+bookmarks~
+.org-id-locations
+\#*#
+.#*
+*~

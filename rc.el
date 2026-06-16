@@ -3,6 +3,9 @@
 
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
+(setq package-pinned-packages
+      '((magit . "nongnu")
+        (magit-section . "nongnu")))
 ;; (add-to-list 'package-archives
 ;;              '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
@@ -32,5 +35,4 @@
 
 (rc/require 'dash)
 (require 'dash)
-
 
