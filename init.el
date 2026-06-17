@@ -56,6 +56,20 @@
 (setq ring-bell-function 'ignore);屏蔽警告音
 (setq c-basic-offset 4)
 
+(rc/require 'dashboard)
+(setq dashboard-startup-banner (expand-file-name "banners/rao-emacs-flat.txt" rc/config-dir)
+      dashboard-banner-logo-title nil
+      dashboard-center-content t
+      dashboard-vertically-center-content t
+      dashboard-set-heading-icons t
+      dashboard-set-file-icons t
+      dashboard-set-init-info t
+      dashboard-items '((recents . 5)
+                        (bookmarks . 5)))
+(when (and (boundp 'org-agenda-files) org-agenda-files)
+  (add-to-list 'dashboard-items '(agenda . 5) t))
+(dashboard-setup-startup-hook)
+
 (ido-mode 1)
 (setq ido-everywhere t)
 (ido-everywhere 1)
@@ -232,7 +246,6 @@
 ;; ======================================
 
 (defun startup-timer ()
-  (let ((elapsed (float-time (time-subtract after-init-time before-init-time))))
-    (with-current-buffer "*scratch*"
-      (insert (format ";; Start up finished in: %.3f s。\n" elapsed)))))
+  (message "Start up finished in %.3f s"
+           (float-time (time-subtract after-init-time before-init-time))))
 (add-hook 'emacs-startup-hook #'startup-timer)
