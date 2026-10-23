@@ -1,3 +1,8 @@
+;;; init.el --- Portable personal Emacs configuration -*- lexical-binding: t; -*-
+
+(when (version< emacs-version "30.1")
+  (error "This configuration requires Emacs 30.1 or newer"))
+
 ;; 提高启动时的 GC 阈值，加快加载速度
 (setq gc-cons-threshold (* 50 1024 1024))
 
@@ -6,28 +11,26 @@
           (lambda ()
             (setq gc-cons-threshold (* 2 1024 1024))))
 
-;; 暂时禁用 file-name-handler 以加速启动
-(setq default-file-name-handler-alist file-name-handler-alist)
-(setq file-name-handler-alist nil)
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq file-name-handler-alist default-file-name-handler-alist)))
 ;; ======================================
 ;; 自定义设置文件（分离自定义配置）
 ;; ======================================
 (defvar rc/config-dir (file-name-directory (or load-file-name buffer-file-name)))
+(load (expand-file-name "custom-defaults.el" rc/config-dir))
 (setq custom-file (expand-file-name "custom.el" rc/config-dir))
 (when (file-exists-p custom-file)
   (load custom-file))
 (setq package-user-dir (expand-file-name "elpa" rc/config-dir))
-(require (quote package))
+(require 'package)
 (package-initialize)
 (load (expand-file-name "rc.el" rc/config-dir))
+(require 'use-package)
+(require 'subr-x)
 ;; ======================================
 ;; 界面设置,功能启用
 ;; ======================================
 (setq initial-frame-alist '((fullscreen . maximized)));默认为最大化
-(cond
+(when (display-graphic-p)
+ (cond
  ;; Windows 系统
  ((eq system-type 'windows-nt)
   (set-frame-font "Consolas-16"))
@@ -38,12 +41,12 @@
 
  ;; Linux 系统 (通常用 DejaVu Sans Mono 或 JetBrains Mono)
  (t
-  (set-frame-font "Monospace-16")))
+  (set-frame-font "Monospace-16"))))
 
 (rc/require-theme 'gruber-darker)
 (menu-bar-mode -1)    ; 禁用菜单栏
-(tool-bar-mode -1)    ; 禁用工具栏
-(toggle-scroll-bar -1) ; 禁用滚动条
+(when (fboundp 'tool-bar-mode) (tool-bar-mode -1))    ; 禁用工具栏
+(when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1)) ; 禁用滚动条
 (electric-pair-mode t);自动补全括号
 (fset 'yes-or-no-p 'y-or-n-p)
 (global-auto-revert-mode t);自动刷新buffer
@@ -236,18 +239,23 @@
 (require 'org-download)
 (setq-default org-download-image-dir "./images") ; 图片存储目录
 (add-hook 'dired-mode-hook 'org-download-enable)
-(define-key org-mode-map (kbd "C-c p") 'org-download-clipboard)
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c p") #'org-download-clipboard))
 ;; ======================================
 ;; Org-roam 核心配置
 ;; ======================================
 (rc/require 'org-roam)
 (rc/require 'org-roam-ui)
+(require 'org-roam)
 (with-eval-after-load 'org-roam
   ;; 1. 设置笔记存储目录 (请修改为你自己的路径)
-  (setq org-roam-directory (file-truename "~/org/roam-notes/"))
+  (setq org-roam-directory (expand-file-name "~/org/roam-notes/"))
+  (make-directory org-roam-directory t)
 
   ;; 2. 数据库自动同步 (这是 org-roam 快速搜索的基础)
-  (org-roam-db-autosync-mode)
+  (if (and (fboundp 'sqlite-available-p) (sqlite-available-p))
+      (org-roam-db-autosync-mode 1)
+    (display-warning 'rc "Org-roam needs an Emacs build with SQLite support."))
 )
 ;; 3. 快捷键绑定 (Org-roam 的灵魂)
 (global-set-key (kbd "C-c n c") 'org-roam-capture)

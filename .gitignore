@@ -14,3 +14,12 @@ bookmarks~
 .#*
 *~
 org-latex-preview/
+
+# Session history and generated state
+recentf
+tramp
+url/
+network-security.data
+*.elc
+*.eln
+custom.el
