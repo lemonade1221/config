@@ -22,7 +22,13 @@
 (setq package-user-dir (expand-file-name "elpa" rc/config-dir))
 (require 'package)
 (package-initialize)
-(load (expand-file-name "rc.el" rc/config-dir))
+;; Package sources and pins stay independent of package loading.
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa" . "https://melpa.org/packages/"))
+      package-pinned-packages
+      '((magit . "nongnu") (magit-section . "nongnu")))
 (require 'use-package)
 (require 'subr-x)
 ;; ======================================
@@ -43,7 +49,11 @@
  (t
   (set-frame-font "Monospace-16"))))
 
-(rc/require-theme 'gruber-darker)
+(use-package gruber-darker-theme
+  :ensure t
+  :demand t
+  :config
+  (load-theme 'gruber-darker t))
 (menu-bar-mode -1)    ; 禁用菜单栏
 (when (fboundp 'tool-bar-mode) (tool-bar-mode -1))    ; 禁用工具栏
 (when (fboundp 'scroll-bar-mode) (scroll-bar-mode -1)) ; 禁用滚动条
@@ -61,42 +71,55 @@
 (setq ring-bell-function 'ignore);屏蔽警告音
 (setq c-basic-offset 4)
 
-(rc/require 'dashboard)
-(setq dashboard-startup-banner (expand-file-name "banners/rao-emacs-flat.txt" rc/config-dir)
-      dashboard-banner-logo-title nil
-      dashboard-center-content t
-      dashboard-vertically-center-content t
-      dashboard-set-heading-icons t
-      dashboard-set-file-icons t
-      dashboard-set-init-info t
-      dashboard-items '((recents . 5)
-                        (bookmarks . 5)))
-(when (and (boundp 'org-agenda-files) org-agenda-files)
-  (add-to-list 'dashboard-items '(agenda . 5) t))
-(dashboard-setup-startup-hook)
+(use-package dashboard
+  :ensure t
+  :demand t
+  :config
+  (setq dashboard-startup-banner (expand-file-name "banners/rao-emacs-flat.txt" rc/config-dir)
+        dashboard-banner-logo-title nil
+        dashboard-center-content t
+        dashboard-vertically-center-content t
+        dashboard-set-heading-icons t
+        dashboard-set-file-icons t
+        dashboard-set-init-info t
+        dashboard-items '((recents . 5)
+                          (bookmarks . 5)))
+  (when (and (boundp 'org-agenda-files) org-agenda-files)
+    (add-to-list 'dashboard-items '(agenda . 5) t))
+  (dashboard-setup-startup-hook)
+)
 
 (ido-mode 1)
 (setq ido-everywhere t)
 (ido-everywhere 1)
 (setq ido-auto-merge-work-directories-length -1)
-(rc/require 'smex)
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
+(use-package smex
+  :ensure t
+  :bind (("M-x" . smex)
+         ("C-c C-c M-x" . execute-extended-command)))
 
-(rc/require 'vertico)
-(vertico-mode 1)
-(setq vertico-count 4)               
-(setq vertico-resize nil)
+(use-package vertico
+  :ensure t
+  :demand t
+  :custom
+  (vertico-count 4)
+  (vertico-resize nil)
+  :config
+  (vertico-mode 1))
 
-(rc/require 'multiple-cursors)
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C->")         'mc/mark-next-like-this)
-(global-set-key (kbd "C-<")         'mc/mark-previous-like-this)
-(global-set-key (kbd "C-c C-<")     'mc/mark-all-like-this)
-(global-set-key (kbd "C-\"")        'mc/skip-to-next-like-this)
-(global-set-key (kbd "C-:")         'mc/skip-to-previous-like-this)
+(use-package multiple-cursors
+  :ensure t
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-c C-<" . mc/mark-all-like-this)
+         ("C-\"" . mc/skip-to-next-like-this)
+         ("C-:" . mc/skip-to-previous-like-this)))
 
-(rc/require 'rust-mode)
+(use-package rust-mode
+  :ensure t
+  :mode "\\.rs\\'")
+
 ;; ======================================
 ;; 自定义功能：复制当前行
 ;; ======================================
@@ -123,8 +146,6 @@
 ;; ======================================
 ;; Git 工作流增强
 ;; ======================================
-(rc/require 'magit 'diff-hl)
-
 (use-package magit
   :ensure t
   :bind (("C-c g s" . magit-status)
@@ -133,60 +154,46 @@
 
 (use-package diff-hl
   :ensure t
-  :hook ((dired-mode . diff-hl-dired-mode)
+  :hook ((after-init . global-diff-hl-mode)
+         (dired-mode . diff-hl-dired-mode)
          (after-save . diff-hl-update))
   :bind (("C-c g n" . diff-hl-next-hunk)
          ("C-c g p" . diff-hl-previous-hunk)
-         ("C-c g r" . diff-hl-revert-hunk))
-  :config
-  (global-diff-hl-mode 1))
+         ("C-c g r" . diff-hl-revert-hunk)))
 
 ;; ======================================
 ;; gt.el 配置
 ;; ======================================
-(rc/require 'gt)
-(require 'gt)
+(defvar gt-long-text-translator nil)
 
-;; ========= 默认翻译（短文本） =========
-(setq gt-default-translator
-      (gt-translator
-       :taker (gt-taker :langs '(en zh))
-       :engines (list
-                 (gt-youdao-dict-engine)
-                 (gt-bing-engine))
-       :render (gt-buffer-render)))
-
-;; ========= 长文本翻译（论文） =========
-(setq gt-long-text-translator
-      (gt-translator
-       :taker (gt-taker :langs '(en zh))
-       :engines (list
-                 ;; 推荐：DeepL 或 Google
-                 (gt-google-engine)
-                 ;; 如果你后面接 GPT，可以替换这里
-                 )
-       :render (gt-buffer-render)))
-
-;; ========= 快捷键 =========
-(global-set-key (kbd "C-c t") 'gt-translate)          ;; 默认
-(global-set-key (kbd "C-c T")                         ;; 大写 T：长文本
-                (lambda ()
-                  (interactive)
-                  (gt-start gt-long-text-translator)))
+(use-package gt
+  :ensure t
+  :commands gt-start
+  :bind (("C-c t" . gt-translate)
+         ("C-c T" . rc/translate-long-text))
+  :config
+  (defun rc/translate-long-text ()
+    "Translate long text using the configured Google engine."
+    (interactive)
+    (gt-start gt-long-text-translator))
+  (setq gt-default-translator
+        (gt-translator
+         :taker (gt-taker :langs '(en zh))
+         :engines (list (gt-youdao-dict-engine) (gt-bing-engine))
+         :render (gt-buffer-render))
+        gt-long-text-translator
+        (gt-translator
+         :taker (gt-taker :langs '(en zh))
+         :engines (list (gt-google-engine))
+         :render (gt-buffer-render))))
 
 ;; ======================================
-;; Org-mode 扩展包安装
+;; Org: settings are ready before the first Org buffer is created.
 ;; ======================================
-(rc/require 'org-appear)           ; 动态显示/隐藏标记 (Typora 核心体验)
-(rc/require 'org-modern)           ; 现代化的 UI 元素（标题、复选框、表格）
-(rc/require 'visual-fill-column)   ; 居中排版显示
-(rc/require 'org-download)         ; 截图直接粘贴到 Org (类似 Typora 粘贴图片)
-(rc/require 'org-fragtog)          ; 自动渲染 LaTeX 公式预览
-
-;; ======================================
-;; Org-mode 核心配置
-;; ======================================
-(with-eval-after-load 'org
+(use-package org
+  :ensure nil
+  :defer t
+  :init
   ;; 1. 基础视觉优化：隐藏标记符号，开启缩进
   (setq org-startup-indented t            ; 开启自动缩进
         org-hide-emphasis-markers t       ; 隐藏 *粗体* / /斜体/ 的符号
@@ -195,9 +202,10 @@
         org-fontify-whole-heading-line t  ; 标题行整行高亮
         org-support-shift-select t        ; 支持 Shift 选择
         org-preview-latex-default-process 'dvisvgm ; 使用 SVG 渲染公式
-        org-preview-latex-image-directory (expand-file-name "org-latex-preview/" user-emacs-directory)
-        org-latex-preview-ltxpng-directory (expand-file-name "org-latex-preview/" user-emacs-directory))
+        org-preview-latex-image-directory (expand-file-name "org-latex-preview/" user-emacs-directory))
+  :config
   (plist-put org-format-latex-options :scale 1.6)
+  (keymap-set org-mode-map "C-c p" #'org-download-clipboard)
 
   ;; 2. 增强标题字号 (让它看起来更像 Markdown 编辑器)
   (custom-set-faces
@@ -213,56 +221,83 @@
    '(org-verbatim ((t (:inherit fixed-pitch :background "#202020" :foreground "#e4e4ef")))))
 
   ;; 3. 快速插入代码块 (输入 <s 然后按 TAB)
-  (require 'org-tempo)
   (add-to-list 'org-structure-template-alist '("s" . "src"))
   (add-to-list 'org-structure-template-alist '("e" . "example"))
-  ;; 加载 Markdown 导出模块
-  (require 'ox-md)
   )
-;; ======================================
-;; 功能插件配置
-;; ======================================
-;; 1. Org-Appear: 只有光标在上面时才显示 * / _ 等标记
-(add-hook 'org-mode-hook 'org-appear-mode)
-(setq org-appear-autoemphasis t
-      org-appear-autolinks t
-      org-appear-autosubmarkers t)
 
-;; 2. Org-Modern: 将星号标题、复选框等修饰为现代图形
-(add-hook 'org-mode-hook #'org-modern-mode)
-(setq org-modern-star 'replace) ; 替换星号标题
+(use-package org-tempo
+  :ensure nil
+  :after org)
 
-;; 3. Org-Fragtog: 光标离开公式时自动显示 LaTeX 预览
-(add-hook 'org-mode-hook #'org-fragtog-mode)
+(use-package ox-md
+  :ensure nil
+  :after org)
+;; Org extensions load when entering Org, preserving the current editing UI.
+(use-package org-appear
+  :ensure t
+  :hook (org-mode . org-appear-mode)
+  :custom
+  (org-appear-autoemphasis t)
+  (org-appear-autolinks t)
+  (org-appear-autosubmarkers t))
 
-;; . Org-Download: 类似 Typora 粘贴剪贴板图片
-(require 'org-download)
-(setq-default org-download-image-dir "./images") ; 图片存储目录
-(add-hook 'dired-mode-hook 'org-download-enable)
-(with-eval-after-load 'org
-  (define-key org-mode-map (kbd "C-c p") #'org-download-clipboard))
-;; ======================================
-;; Org-roam 核心配置
-;; ======================================
-(rc/require 'org-roam)
-(rc/require 'org-roam-ui)
-(require 'org-roam)
-(with-eval-after-load 'org-roam
-  ;; 1. 设置笔记存储目录 (请修改为你自己的路径)
-  (setq org-roam-directory (expand-file-name "~/org/roam-notes/"))
+(use-package org-modern
+  :ensure t
+  :hook (org-mode . org-modern-mode)
+  :custom
+  (org-modern-star 'replace))
+
+;; Retained for compatibility; the original configuration did not enable it.
+(use-package visual-fill-column
+  :ensure t
+  :commands visual-fill-column-mode)
+
+(use-package org-fragtog
+  :ensure t
+  :hook (org-mode . org-fragtog-mode))
+
+(use-package org-download
+  :ensure t
+  :commands (org-download-clipboard org-download-screenshot)
+  :hook (dired-mode . org-download-enable)
+  :init
+  (setq-default org-download-image-dir "./images"))
+
+(defvar rc/org-roam-idle-timer nil)
+
+(defun rc/start-org-roam ()
+  "Enable note synchronization before editing Org or once Emacs is idle."
+  (when (timerp rc/org-roam-idle-timer)
+    (cancel-timer rc/org-roam-idle-timer)
+    (setq rc/org-roam-idle-timer nil))
+  (when (and (fboundp 'sqlite-available-p) (sqlite-available-p))
+    ;; Loading runs the declaration's :config and enables synchronization.
+    (require 'org-roam)
+    (unless (bound-and-true-p org-roam-db-autosync-mode)
+      (org-roam-db-autosync-mode 1))))
+
+(use-package org-roam
+  :ensure t
+  :commands org-roam-db-autosync-mode
+  :hook (org-mode . rc/start-org-roam)
+  :bind (("C-c n c" . org-roam-capture)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n l" . org-roam-buffer-toggle))
+  :init
+  (defvar org-roam-directory (expand-file-name "~/org/roam-notes/"))
+  (unless noninteractive
+    (setq rc/org-roam-idle-timer
+          (run-with-idle-timer 2 nil #'rc/start-org-roam)))
+  :config
   (make-directory org-roam-directory t)
-
-  ;; 2. 数据库自动同步 (这是 org-roam 快速搜索的基础)
   (if (and (fboundp 'sqlite-available-p) (sqlite-available-p))
       (org-roam-db-autosync-mode 1)
-    (display-warning 'rc "Org-roam needs an Emacs build with SQLite support."))
-)
-;; 3. 快捷键绑定 (Org-roam 的灵魂)
-(global-set-key (kbd "C-c n c") 'org-roam-capture)
-(global-set-key (kbd "C-c n f") 'org-roam-node-find)   ; 查找/创建笔记
-(global-set-key (kbd "C-c n i") 'org-roam-node-insert) ; 在当前位置插入链接
-(global-set-key (kbd "C-c n l") 'org-roam-buffer-toggle) ; 显示双向链接侧边栏
-(global-set-key (kbd "C-c n u") 'org-roam-ui-mode)
+    (display-warning 'rc "Org-roam needs an Emacs build with SQLite support.")))
+
+(use-package org-roam-ui
+  :ensure t
+  :bind ("C-c n u" . org-roam-ui-mode))
 
 ;; ======================================
 ;; 显示启动时间

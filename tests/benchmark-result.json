@@ -1,0 +1,24 @@
+{
+  "seconds": {
+    "before": [
+      0.336174,
+      0.308748,
+      0.33365,
+      0.333222,
+      0.345707
+    ],
+    "after": [
+      0.125127,
+      0.117205,
+      0.129527,
+      0.119897,
+      0.131462
+    ]
+  },
+  "median_seconds": {
+    "before": 0.3337,
+    "after": 0.1251
+  },
+  "reduction_percent": 62.5,
+  "scope": "Batch config load plus after-init hooks, installed packages, empty isolated note database. Excludes GUI and deferred Org-roam idle initialization."
+}

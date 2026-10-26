@@ -35,20 +35,32 @@ macOS 图形版可用 `/Applications/Emacs.app/Contents/MacOS/Emacs` 代替上�
 
 ## 个人数据与维护
 
-Org-roam 首次启动会创建 `~/org/roam-notes/`。笔记内容不在本仓库内，需要单独备份或同步；可在 `init.el` 中修改 `org-roam-directory`。
+Org-roam 首次初始化时会创建 `~/org/roam-notes/`。笔记内容不在本仓库内，需要单独备份或同步；可在 `init.el` 中修改 `org-roam-directory`。
 
-`custom-defaults.el` 保存共享的界面默认设置；`custom.el` 保存本机通过 Customize 生成的覆盖设置，已被 Git 忽略。软件包安装以 `init.el` 中的 `rc/require` 和 `use-package :ensure` 声明为准，无需从旧电脑复制 `elpa/`。
+`custom-defaults.el` 保存共享的界面默认设置；`custom.el` 保存本机通过 Customize 生成的覆盖设置，已被 Git 忽略。软件包安装统一以 `init.el` 中的 `use-package :ensure` 声明为准，无需从旧电脑复制 `elpa/`。
 
 会话历史、TRAMP 缓存、书签、Org-roam 数据库、LaTeX 预览缓存及自动保存文件均被 Git 忽略。提交前用 `git status` 检查，只同步配置文件。
 
 常用快捷键：`C-c g s` 打开 Magit，`C-c t` 翻译，`C-c q` 运行代码，`C-c n f` 查找笔记，Org 中 `C-c p` 粘贴图片。
 
+## 加载策略
+
+主题、Dashboard、Vertico 在启动时加载，保留现有界面。Smex、多光标、Magit、Quickrun 和翻译通过原有快捷键加载，Rust 模式通过 `.rs` 文件触发。
+
+Org 视觉设置在第一次进入 Org 模式前准备好；Org-appear、Org-modern、Org-fragtog 随 Org 模式启用。图片粘贴仍使用 `C-c p`，首次使用时加载 Org-download，进入 Dired 时也会加载以保留拖放功能。保留 visual-fill-column 的安装与手动命令，维持原配置默认不开启的行为。
+
+Org-roam 在首次进入 Org 模式、使用笔记快捷键或 Emacs 空闲 2 秒时初始化，并开启 SQLite 数据库自动同步。首次初始化仍有加载成本，进入 Org 时若已经初始化就不会重复同步。笔记目录默认仍为 `~/org/roam-notes/`。Org-roam UI 通过 `C-c n u` 加载。
+
+Git 修改标记在 `after-init-hook` 开启，避免原配置中必须先触发保存或 Dired 才启用全局标记的情况。软件包源及 Magit 的 NonGNU 源固定设置已移到 `init.el`，不再需要 `rc.el`。
+
 ## 启动验证
 
-从仓库根目录运行下列命令；它会使用本仓库的配置和 `elpa/`，首次运行同样会安装依赖，并创建默认笔记目录。
+先正常启动 Emacs 完成依赖安装，再从仓库根目录运行：
 
 ```sh
 emacs --batch -Q -l tests/smoke.el
 ```
 
-若要验证全新安装，可将仓库克隆到临时目录后运行同一命令。验证包含配置加载、Org 模式和 SQLite 可用时的 Org-roam 数据库连接。
+测试要求已安装插件，禁止测试期间刷新或安装软件包。验证包含启动时的延迟加载状态、关键快捷键、首次长文本翻译的配置选择、Org 视觉模式、图片快捷键、Rust 模式、Dired 和 SQLite 保存笔记后自动索引。翻译调用被拦截，不会向翻译服务发送内容。测试使用临时笔记目录和数据库，不访问个人笔记。
+
+本机 Emacs 30.2 五轮批处理测量，配置加载加 `after-init-hook` 的中位数从 0.3337 秒变为 0.1251 秒，减少约 62.5%。测量使用已安装的软件包和隔离的空笔记数据库，不包含图形界面绘制及延后的 Org-roam 初始化，因此不代表完整 GUI 启动时间。原始数据见 `tests/benchmark-result.json`。
